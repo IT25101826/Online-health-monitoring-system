@@ -15,73 +15,82 @@ if ($conn->connect_error) {
 
 
 // ==========================
-// ADD DOCTOR
+// GET ADMIN INFORMATION
 // ==========================
 
-if (isset($_POST['add_doctor'])) {
+// Get total administrators
+$admin_result = $conn->query(
+    "SELECT COUNT(*) AS total FROM admin"
+);
 
-    $name = $_POST['name'];
-    $specialization = $_POST['specialization'];
-    $qualification = $_POST['qualification'];
-    $phone = $_POST['phone'];
-    $email = $_POST['email'];
-    $available_days = $_POST['available_days'];
-    $available_time = $_POST['available_time'];
+$total_admins = $admin_result->fetch_assoc()['total'];
 
-    $sql = "INSERT INTO Doctor
-            (name, specialization, qualification, phone, email, available_days, available_time)
-            VALUES (?, ?, ?, ?, ?, ?, ?)";
 
-    $stmt = $conn->prepare($sql);
+// Get total doctors
+$doctor_result = $conn->query(
+    "SELECT COUNT(*) AS total FROM doctor"
+);
 
-    $stmt->bind_param(
-        "sssssss",
-        $name,
-        $specialization,
-        $qualification,
-        $phone,
-        $email,
-        $available_days,
-        $available_time
-    );
+$total_doctors = $doctor_result->fetch_assoc()['total'];
 
-    if ($stmt->execute()) {
-        $message = "Doctor added successfully!";
-    } else {
-        $message = "Error adding doctor.";
-    }
 
-    $stmt->close();
-}
+// Get total patients
+$patient_result = $conn->query(
+    "SELECT COUNT(*) AS total FROM patient"
+);
+
+$total_patients = $patient_result->fetch_assoc()['total'];
+
+
+// Get total clients
+$client_result = $conn->query(
+    "SELECT COUNT(*) AS total FROM client"
+);
+
+$total_clients = $client_result->fetch_assoc()['total'];
+
+
+// Get total appointments
+$appointment_result = $conn->query(
+    "SELECT COUNT(*) AS total FROM appointments"
+);
+
+$total_appointments = $appointment_result->fetch_assoc()['total'];
+
+
+// Get total health records
+$health_result = $conn->query(
+    "SELECT COUNT(*) AS total FROM health_record"
+);
+
+$total_health_records = $health_result->fetch_assoc()['total'];
+
+
+// Get total reports
+$report_result = $conn->query(
+    "SELECT COUNT(*) AS total FROM report"
+);
+
+$total_reports = $report_result->fetch_assoc()['total'];
+
+
+// Get total medicines
+$medicine_result = $conn->query(
+    "SELECT COUNT(*) AS total FROM prescribed_medicine"
+);
+
+$total_medicines = $medicine_result->fetch_assoc()['total'];
 
 
 // ==========================
-// DELETE DOCTOR
+// GET ALL ADMINISTRATORS
 // ==========================
 
-if (isset($_GET['delete'])) {
-
-    $doctor_id = $_GET['delete'];
-
-    $sql = "DELETE FROM Doctor WHERE doctor_id = ?";
-
-    $stmt = $conn->prepare($sql);
-    $stmt->bind_param("i", $doctor_id);
-
-    if ($stmt->execute()) {
-        header("Location: doctor.php");
-        exit();
-    }
-
-    $stmt->close();
-}
-
-
-// ==========================
-// GET ALL Doctor
-// ==========================
-
-$result = $conn->query("SELECT * FROM Doctor ORDER BY doctor_id DESC");
+$result = $conn->query(
+    "SELECT admin_id, admin_name, admin_address, date_of_birth
+     FROM admin
+     ORDER BY admin_id DESC"
+);
 
 ?>
 
@@ -94,7 +103,7 @@ $result = $conn->query("SELECT * FROM Doctor ORDER BY doctor_id DESC");
 
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>Doctor Management</title>
+    <title>Admin Management</title>
 
     <style>
 
@@ -127,7 +136,6 @@ $result = $conn->query("SELECT * FROM Doctor ORDER BY doctor_id DESC");
 
         .sidebar .brand {
             padding-bottom: 30px;
- 
         }
 
         .sidebar .brand h1 {
@@ -362,332 +370,485 @@ $result = $conn->query("SELECT * FROM Doctor ORDER BY doctor_id DESC");
 <body>
 
 <div class="app-shell">
+
     <aside class="sidebar">
+
         <div class="brand">
-            <h1>MEDI <span>NOVA</span>.</h1>
-            <p>Health Monitoring System</p>
+
+            <h1>
+                MEDI <span>NOVA</span>.
+            </h1>
+
+            <p>
+                Health Monitoring System
+            </p>
+
         </div>
 
         <nav class="side-nav">
-            <a href="#" class="active">
+
+            <a href="doctor.php">
+
                 <span class="icon">◆</span>
-                <span>Doctor Management</span>
-                
+
+                <span>
+                    Doctor Management
+                </span>
+
             </a>
+
+
+            <a href="patient.php">
+
+                <span class="icon">◆</span>
+
+                <span>
+                    Patient Management
+                </span>
+
+            </a>
+
+
             <a href="#">
+
                 <span class="icon">◆</span>
-                <span>Patient Management</span>
+
+                <span>
+                    User Authentication
+                </span>
+
             </a>
+
+
             <a href="#">
+
                 <span class="icon">◆</span>
-                <span>User Authentication</span>
+
+                <span>
+                    Appointment Management
+                </span>
+
             </a>
+
+
             <a href="#">
+
                 <span class="icon">◆</span>
-                <span>Appointment Management</span>
+
+                <span>
+                    Health Monitoring
+                </span>
+
             </a>
+
+
             <a href="#">
+
                 <span class="icon">◆</span>
-                <span>Health Monitoring</span>
+
+                <span>
+                    Report Management
+                </span>
+
             </a>
-            <a href="#">
+
+
+            <a href="admin.php" class="active">
+
                 <span class="icon">◆</span>
-                <span>Report Management</span>
+
+                <span>
+                    Admin Dashboard
+                </span>
+
             </a>
-            <a href="#">
+
+
+            <a href="#system-management">
+
                 <span class="icon">◆</span>
-                <span>Admin Dashboard</span>
+
+                <span>
+                    System Management
+                </span>
+
             </a>
-            <a href="#">
-                <span class="icon">◆</span>
-                <span>System Management</span>
-            </a>
+
         </nav>
+
     </aside>
+
 
     <main class="main-content">
 
-<div class="header">
+        <div class="header">
 
-</div>
-
-
-<div class="container">
-
-    <div class="sub-nav">
-        <a href="#doctor-management" class="active">Doctor Management</a>
-        <a href="#doctor-list">Doctor List</a>
-    </div>
-
-    <?php if (isset($message)): ?>
-
-        <div class="message">
-            <?php echo $message; ?>
         </div>
 
-    <?php endif; ?>
+
+        <div class="container">
 
 
-    <!-- ==========================
-         ADD DOCTOR FORM
-         ========================== -->
+            <div class="sub-nav">
 
-    <div class="card" id="doctor-management">
+                <a href="#admin-management" class="active">
+                    Admin Management
+                </a>
 
-        <h2>Add New Doctor</h2>
+                <a href="#admin-list">
+                    Admin List
+                </a>
 
-        <form method="POST" action="doctor.php">
+                <a href="#system-management">
+                    System Management
+                </a>
 
-            <div class="form-grid">
-
-                <div class="form-group">
-
-                    <label>Doctor Name</label>
-
-                    <input
-                        type="text"
-                        name="name"
-                        placeholder="Enter doctor name"
-                        required
-                    >
-
-                </div>
+            </div>
 
 
-                <div class="form-group">
+            <!-- ==========================
+                 ADMIN MANAGEMENT
+                 ========================== -->
 
-                    <label>Specialization</label>
+            <div class="card" id="admin-management">
 
-                    <select name="specialization" required>
-
-                        <option value="">Select Specialization</option>
-
-                        <option value="General Physician">
-                            General Physician
-                        </option>
-
-                        <option value="Cardiologist">
-                            Cardiologist
-                        </option>
-
-                        <option value="Dermatologist">
-                            Dermatologist
-                        </option>
-
-                        <option value="Neurologist">
-                            Neurologist
-                        </option>
-
-                        <option value="Pediatrician">
-                            Pediatrician
-                        </option>
-
-                        <option value="Psychiatrist">
-                            Psychiatrist
-                        </option>
-
-                        <option value="Dentist">
-                            Dentist
-                        </option>
-
-                        <option value="Other">
-                            Other
-                        </option>
-
-                    </select>
-
-                </div>
+                <h2>
+                    Administration Dashboard
+                </h2>
 
 
-                <div class="form-group">
-
-                    <label>Qualification</label>
-
-                    <input
-                        type="text"
-                        name="qualification"
-                        placeholder="e.g. MBBS, MD"
-                    >
-
-                </div>
+                <div class="form-grid">
 
 
-                <div class="form-group">
+                    <div class="form-group">
 
-                    <label>Phone Number</label>
+                        <label>
+                            Total Administrators
+                        </label>
 
-                    <input
-                        type="text"
-                        name="phone"
-                        placeholder="Enter phone number"
-                    >
+                        <input
+                            type="text"
+                            value="<?php echo $total_admins; ?>"
+                            readonly
+                        >
 
-                </div>
-
-
-                <div class="form-group">
-
-                    <label>Email</label>
-
-                    <input
-                        type="email"
-                        name="email"
-                        placeholder="Enter email address"
-                    >
-
-                </div>
+                    </div>
 
 
-                <div class="form-group">
+                    <div class="form-group">
 
-                    <label>Available Days</label>
+                        <label>
+                            Total Clients
+                        </label>
 
-                    <input
-                        type="text"
-                        name="available_days"
-                        placeholder="e.g. Monday, Wednesday, Friday"
-                    >
+                        <input
+                            type="text"
+                            value="<?php echo $total_clients; ?>"
+                            readonly
+                        >
 
-                </div>
-
-
-                <div class="form-group full-width">
-
-                    <label>Available Time</label>
-
-                    <input
-                        type="text"
-                        name="available_time"
-                        placeholder="e.g. 9:00 AM - 1:00 PM"
-                    >
-
-                </div>
+                    </div>
 
 
-                <div class="form-group full-width">
+                    <div class="form-group">
 
-                    <button
-                        type="submit"
-                        name="add_doctor"
-                        class="btn"
-                    >
-                        Add Doctor
-                    </button>
+                        <label>
+                            Total Doctors
+                        </label>
+
+                        <input
+                            type="text"
+                            value="<?php echo $total_doctors; ?>"
+                            readonly
+                        >
+
+                    </div>
+
+
+                    <div class="form-group">
+
+                        <label>
+                            Total Patients
+                        </label>
+
+                        <input
+                            type="text"
+                            value="<?php echo $total_patients; ?>"
+                            readonly
+                        >
+
+                    </div>
+
 
                 </div>
 
             </div>
 
-        </form>
 
-    </div>
+            <!-- ==========================
+                 ADMIN LIST
+                 ========================== -->
 
+            <div class="card" id="admin-list">
 
-    <!-- ==========================
-         DOCTOR LIST
-         ========================== -->
-
-    <div class="card" id="doctor-list">
-
-        <h2>Registered Doctor</h2>
-
-        <div class="table-wrapper">
-        <table>
-
-            <tr>
-
-                <th>ID</th>
-                <th>Name</th>
-                <th>Specialization</th>
-                <th>Qualification</th>
-                <th>Phone</th>
-                <th>Email</th>
-                <th>Available Days</th>
-                <th>Available Time</th>
-                <th colspan="2">Action</th>
-
-            </tr>
+                <h2>
+                    Registered Administrators
+                </h2>
 
 
-            <?php if ($result->num_rows > 0): ?>
+                <div class="table-wrapper">
 
-                <?php while ($doctor = $result->fetch_assoc()): ?>
+                    <table>
 
-                    <tr>
+                        <tr>
 
-                        <td>
-                            <?php echo $doctor['doctor_id']; ?>
-                        </td>
+                            <th>
+                                Admin ID
+                            </th>
 
-                        <td>
-                            <?php echo htmlspecialchars($doctor['name']); ?>
-                        </td>
+                            <th>
+                                Admin Name
+                            </th>
 
-                        <td>
-                            <?php echo htmlspecialchars($doctor['specialization']); ?>
-                        </td>
+                            <th>
+                                Address
+                            </th>
 
-                        <td>
-                            <?php echo htmlspecialchars($doctor['qualification']); ?>
-                        </td>
+                            <th>
+                                Date of Birth
+                            </th>
 
-                        <td>
-                            <?php echo htmlspecialchars($doctor['phone']); ?>
-                        </td>
+                        </tr>
 
-                        <td>
-                            <?php echo htmlspecialchars($doctor['email']); ?>
-                        </td>
 
-                        <td>
-                            <?php echo htmlspecialchars($doctor['available_days']); ?>
-                        </td>
+                        <?php if ($result->num_rows > 0): ?>
 
-                        <td>
-                            <?php echo htmlspecialchars($doctor['available_time']); ?>
-                        </td>
+                            <?php while ($admin = $result->fetch_assoc()): ?>
 
-                        <td>
+                                <tr>
 
-                            <a
-                                href="doctor.php?delete=<?php echo $doctor['doctor_id']; ?>"
-                                class="delete-btn"
-                                onclick="return confirm('Are you sure you want to delete this doctor?');"
-                            >
-                                Delete
-                            </a>
+                                    <td>
+                                        <?php
+                                        echo htmlspecialchars(
+                                            $admin['admin_id']
+                                        );
+                                        ?>
+                                    </td>
 
-                        </td>
 
-                    </tr>
+                                    <td>
+                                        <?php
+                                        echo htmlspecialchars(
+                                            $admin['admin_name']
+                                        );
+                                        ?>
+                                    </td>
 
-                <?php endwhile; ?>
 
-            <?php else: ?>
+                                    <td>
+                                        <?php
+                                        echo htmlspecialchars(
+                                            $admin['admin_address']
+                                        );
+                                        ?>
+                                    </td>
 
-                <tr>
 
-                    <td colspan="9">
-                        No Doctor registered yet.
-                    </td>
+                                    <td>
+                                        <?php
+                                        echo htmlspecialchars(
+                                            $admin['date_of_birth']
+                                        );
+                                        ?>
+                                    </td>
 
-                </tr>
+                                </tr>
 
-            <?php endif; ?>
+                            <?php endwhile; ?>
 
-        </table>
+                        <?php else: ?>
+
+                            <tr>
+
+                                <td colspan="4">
+                                    No administrators registered yet.
+                                </td>
+
+                            </tr>
+
+                        <?php endif; ?>
+
+                    </table>
+
+                </div>
+
+            </div>
+
+
+            <!-- ==========================
+                 SYSTEM MANAGEMENT
+                 ========================== -->
+
+            <div class="card" id="system-management">
+
+                <h2>
+                    System Management
+                </h2>
+
+
+                <div class="form-grid">
+
+
+                    <div class="form-group">
+
+                        <label>
+                            Doctor Management
+                        </label>
+
+                        <input
+                            type="text"
+                            value="<?php echo $total_doctors; ?> Doctors Registered"
+                            readonly
+                        >
+
+                    </div>
+
+
+                    <div class="form-group">
+
+                        <label>
+                            Patient Management
+                        </label>
+
+                        <input
+                            type="text"
+                            value="<?php echo $total_patients; ?> Patients Registered"
+                            readonly
+                        >
+
+                    </div>
+
+
+                    <div class="form-group">
+
+                        <label>
+                            User Authentication
+                        </label>
+
+                        <input
+                            type="text"
+                            value="<?php echo $total_clients; ?> Client Accounts"
+                            readonly
+                        >
+
+                    </div>
+
+
+                    <div class="form-group">
+
+                        <label>
+                            Appointment Management
+                        </label>
+
+                        <input
+                            type="text"
+                            value="<?php echo $total_appointments; ?> Appointments"
+                            readonly
+                        >
+
+                    </div>
+
+
+                    <div class="form-group">
+
+                        <label>
+                            Health Monitoring
+                        </label>
+
+                        <input
+                            type="text"
+                            value="<?php echo $total_health_records; ?> Health Records"
+                            readonly
+                        >
+
+                    </div>
+
+
+                    <div class="form-group">
+
+                        <label>
+                            Report Management
+                        </label>
+
+                        <input
+                            type="text"
+                            value="<?php echo $total_reports; ?> Reports"
+                            readonly
+                        >
+
+                    </div>
+
+
+                    <div class="form-group">
+
+                        <label>
+                            Medicine Management
+                        </label>
+
+                        <input
+                            type="text"
+                            value="<?php echo $total_medicines; ?> Medicines"
+                            readonly
+                        >
+
+                    </div>
+
+
+                    <div class="form-group">
+
+                        <label>
+                            Administration
+                        </label>
+
+                        <input
+                            type="text"
+                            value="<?php echo $total_admins; ?> Administrators"
+                            readonly
+                        >
+
+                    </div>
+
+
+                    <div class="form-group full-width">
+
+                        <label>
+                            System Status
+                        </label>
+
+                        <input
+                            type="text"
+                            value="System is active"
+                            readonly
+                        >
+
+                    </div>
+
+
+                </div>
+
+            </div>
+
+
         </div>
 
-    </div>
-
-</div>
-
     </main>
+
 </div>
 
 </body>
 
 </html>
+
 
 <?php
 
