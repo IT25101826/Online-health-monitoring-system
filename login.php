@@ -2,7 +2,10 @@
 
 session_start();
 
-// Database connection
+// ==========================
+// DATABASE CONNECTION
+// ==========================
+
 $host = "localhost";
 $username = "root";
 $password = "";
@@ -15,54 +18,112 @@ if ($conn->connect_error) {
     die("Database connection failed: " . $conn->connect_error);
 }
 
-
-// ==========================
-// HANDLE LOGIN FORM SUBMIT
-// ==========================
-
 $message = "";
+
+
+// ==========================
+// HANDLE LOGIN
+// ==========================
 
 if (isset($_POST['login'])) {
 
-    $client_name = $_POST['client_name'];
-    $passcode = $_POST['passcode'];
+    $user_name = trim($_POST['user_name']);
+    $passcode = trim($_POST['passcode']);
 
-    // Look up the user by client_name (stored in the `User name` column)
-    $sql = "SELECT * FROM User WHERE `User name` = ?";
+
+    // ==========================
+    // FIND CLIENT
+    // ==========================
+
+    $sql = "
+        SELECT
+            client_id,
+            user_name,
+            passcode,
+            roll,
+            email
+        FROM client
+        WHERE user_name = ?
+        LIMIT 1
+    ";
+
     $stmt = $conn->prepare($sql);
-    $stmt->bind_param("s", $client_name);
+
+    if (!$stmt) {
+        die("SQL Error: " . $conn->error);
+    }
+
+    $stmt->bind_param(
+        "s",
+        $user_name
+    );
+
     $stmt->execute();
+
     $result = $stmt->get_result();
+
+
+    // ==========================
+    // CHECK USER
+    // ==========================
 
     if ($result->num_rows === 1) {
 
-        $user = $result->fetch_assoc();
+        $client = $result->fetch_assoc();
 
-        // Compare the typed passcode against the hashed one in the database
-        if (password_verify($passcode, $user['password'])) {
 
-            // Correct login — store details in the session
-            $_SESSION['user_id'] = $user['User-ID'];
-            $_SESSION['client_name'] = $user['User name'];
-            $_SESSION['role'] = $user['Role'];
+        // ==========================
+        // CHECK PASSCODE
+        // ==========================
 
-            // Redirect based on role
-            if ($user['Role'] === 'admin') {
+        if ($passcode === $client['passcode']) {
+
+            // Store login information in session
+            $_SESSION['client_id'] = $client['client_id'];
+            $_SESSION['user_name'] = $client['user_name'];
+            $_SESSION['role'] = $client['roll'];
+            $_SESSION['email'] = $client['email'];
+
+
+            // ==========================
+            // REDIRECT BASED ON ROLE
+            // ==========================
+
+            $role = strtolower(trim($client['roll']));
+
+
+            if ($role === "admin") {
+
                 header("Location: admin.php");
-            } elseif ($user['Role'] === 'doctor') {
+                exit();
+
+            } elseif ($role === "doctor") {
+
                 header("Location: doctor-dashboard.php");
-            } else {
+                exit();
+
+            } elseif ($role === "patient") {
+
                 header("Location: patient-dashboard.php");
+                exit();
+
+            } else {
+
+                // Unknown role
+                $message = "Login successful, but the user role is not recognized.";
             }
 
-            exit();
 
         } else {
+
             $message = "Incorrect passcode. Please try again.";
+
         }
 
     } else {
-        $message = "No account found with that client name.";
+
+        $message = "No account found with that username.";
+
     }
 
     $stmt->close();
@@ -112,7 +173,6 @@ if (isset($_POST['login'])) {
 
         .sidebar .brand {
             padding-bottom: 30px;
- 
         }
 
         .sidebar .brand h1 {
@@ -131,7 +191,6 @@ if (isset($_POST['login'])) {
             letter-spacing: 1px;
             color: #bfdee8;
         }
-
 
         .side-nav a {
             display: flex;
@@ -169,7 +228,6 @@ if (isset($_POST['login'])) {
             margin-left: 280px;
         }
 
-
         .container {
             width: 90%;
             max-width: 1200px;
@@ -177,7 +235,6 @@ if (isset($_POST['login'])) {
         }
 
         .sub-nav {
-            background-color: #ffffff;
             border-radius: 10px;
             padding: 10px;
             margin-bottom: 20px;
@@ -190,7 +247,7 @@ if (isset($_POST['login'])) {
             text-decoration: none;
             color: #ffffff;
             padding: 10px 18px;
-            margin-left:10px;
+            margin-left: 10px;
             border-radius: 6px;
         }
 
@@ -255,14 +312,6 @@ if (isset($_POST['login'])) {
             background-color: #125ca5;
         }
 
-        .message {
-            background-color: #d4edda;
-            color: #155724;
-            padding: 12px;
-            margin-bottom: 20px;
-            border-radius: 5px;
-        }
-
         .error-message {
             background-color: #f8d7da;
             color: #721c24;
@@ -306,131 +355,232 @@ if (isset($_POST['login'])) {
 
 <div class="app-shell">
 
+    <!-- ==========================
+         SIDEBAR
+         ========================== -->
+
     <aside class="sidebar">
+
         <div class="brand">
-            <h1>MEDI <span>NOVA</span>.</h1>
-            <p>Health Monitoring System</p>
+
+            <h1>
+                MEDI <span>NOVA</span>.
+            </h1>
+
+            <p>
+                Health Monitoring System
+            </p>
+
         </div>
+
 
         <nav class="side-nav">
+
             <a href="doctor.php">
+
                 <span class="icon">◆</span>
-                <span>Doctor Management</span>
+
+                <span>
+                    Doctor Management
+                </span>
+
             </a>
+
+
             <a href="patient.php">
+
                 <span class="icon">◆</span>
-                <span>Patient Management</span>
+
+                <span>
+                    Patient Management
+                </span>
+
             </a>
+
+
             <a href="login.php" class="active">
+
                 <span class="icon">◆</span>
-                <span>User Authentication</span>
+
+                <span>
+                    User Authentication
+                </span>
+
             </a>
+
+
             <a href="#">
+
                 <span class="icon">◆</span>
-                <span>Appointment Management</span>
+
+                <span>
+                    Appointment Management
+                </span>
+
             </a>
+
+
             <a href="#">
+
                 <span class="icon">◆</span>
-                <span>Health Monitoring</span>
+
+                <span>
+                    Health Monitoring
+                </span>
+
             </a>
+
+
             <a href="#">
+
                 <span class="icon">◆</span>
-                <span>Report Management</span>
+
+                <span>
+                    Report Management
+                </span>
+
             </a>
+
+
             <a href="#">
+
                 <span class="icon">◆</span>
-                <span>Admin Dashboard</span>
+
+                <span>
+                    Admin Dashboard
+                </span>
+
             </a>
+
+
             <a href="#">
+
                 <span class="icon">◆</span>
-                <span>System Management</span>
+
+                <span>
+                    System Management
+                </span>
+
             </a>
+
         </nav>
+
     </aside>
-
-    <main class="main-content">
-
-<div class="header">
-
-</div>
-
-
-<div class="container">
-
-    <div class="sub-nav">
-        <a href="#login" class="active">Login</a>
-    </div>
-
-    <?php if ($message): ?>
-
-        <div class="error-message">
-            <?php echo $message; ?>
-        </div>
-
-    <?php endif; ?>
 
 
     <!-- ==========================
-         LOGIN FORM
+         MAIN CONTENT
          ========================== -->
 
-    <div class="card" id="login">
+    <main class="main-content">
 
-        <h2>User Login</h2>
-
-        <form method="POST" action="login.php">
-
-            <div class="form-grid">
-
-                <div class="form-group">
-
-                    <label>Client Name</label>
-
-                    <input
-                        type="text"
-                        name="client_name"
-                        placeholder="Enter client name"
-                        required
-                    >
-
-                </div>
+        <div class="container">
 
 
-                <div class="form-group">
+            <!-- Navigation -->
 
-                    <label>Passcode</label>
+            <div class="sub-nav">
 
-                    <input
-                        type="password"
-                        name="passcode"
-                        placeholder="Enter passcode"
-                        required
-                    >
-
-                </div>
-
-
-                <div class="form-group full-width">
-
-                    <button
-                        type="submit"
-                        name="login"
-                        class="btn"
-                    >
-                        Login
-                    </button>
-
-                </div>
+                <a href="#login" class="active">
+                    Login
+                </a>
 
             </div>
 
-        </form>
 
-    </div>
+            <!-- Error Message -->
 
-</div>
+            <?php if ($message != ""): ?>
+
+                <div class="error-message">
+
+                    <?php
+                    echo htmlspecialchars($message);
+                    ?>
+
+                </div>
+
+            <?php endif; ?>
+
+
+            <!-- ==========================
+                 LOGIN FORM
+                 ========================== -->
+
+            <div class="card" id="login">
+
+                <h2>
+                    User Login
+                </h2>
+
+
+                <form method="POST" action="login.php">
+
+                    <div class="form-grid">
+
+
+                        <!-- Username -->
+
+                        <div class="form-group">
+
+                            <label>
+                                Username
+                            </label>
+
+                            <input
+                                type="text"
+                                name="user_name"
+                                maxlength="10"
+                                placeholder="Enter username"
+                                required
+                            >
+
+                        </div>
+
+
+                        <!-- Passcode -->
+
+                        <div class="form-group">
+
+                            <label>
+                                Passcode
+                            </label>
+
+                            <input
+                                type="password"
+                                name="passcode"
+                                maxlength="8"
+                                placeholder="Enter passcode"
+                                required
+                            >
+
+                        </div>
+
+
+                        <!-- Login Button -->
+
+                        <div class="form-group full-width">
+
+                            <button
+                                type="submit"
+                                name="login"
+                                class="btn"
+                            >
+                                Login
+                            </button>
+
+                        </div>
+
+                    </div>
+
+                </form>
+
+            </div>
+
+        </div>
 
     </main>
+
 </div>
 
 </body>
